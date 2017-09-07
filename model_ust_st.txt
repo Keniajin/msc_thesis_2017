@@ -1,0 +1,42 @@
+model {
+
+ for (i in 1:N) { 
+ # Likelihood
+ #Count data: Salmonella example bugsbook
+	cumulitive_count[i] ~ dnegbin(p[i], r)
+	p[i] <- r/(mu[i] + r)	
+   log(mu[i])<- log(nagem[i]) + alpha[1]+alpha[2]*EVI_VALUE[i]+ alpha[3]*rainX[i] + alpha[4]*nsex[i]+
+			alpha[5]*equals(severe_disease[i],1) + alpha[6]*equals(severe_disease[i],2) +
+			alpha[7]*equals(severe_disease[i],3) +alpha[8]*total_adm[i] + alpha[9]*admDays[i] + alpha[10]*nweight[i]+Phi[sublocation[i]]+Psi[1,count_adm[i]]
+}#end loop
+
+##########
+#   Priors   #
+##########
+	#r
+	r ~ dcat(pi[])
+	
+## 1:11 is the number of succcessful admissions 
+for (i in 1:11) {
+		pi[i] <- 1/11
+	}
+# Baseline Covariate Coefficient
+  alpha[1]~dflat()
+### for the model parameters specification 
+for (j in 2:10) {
+  alpha[j]~dnorm(0, 0.001)
+ } 
+# Bivariate CAR Prior for Phi -- Spatial Main Effects
+  Phi[1:40] ~ car.normal(adj[], weights[], num[], tau)     # num specifies no. of neighbors 
+   for(i in 1:sumNumNeigh){weights[i] <- 1}  
+ 
+### prior for tau
+	tau  ~ dgamma(0.5, 0.0005)
+
+# Priors for count of admission -- Temporal Main Effects (Note main effects for admisions counts are fixed effects, not CAR)
+	Psi[1,1]<-0
+	for (t in 2:11) {
+  Psi[1,t]~dnorm(0,.001)
+	} 
+ 
+}#end model
